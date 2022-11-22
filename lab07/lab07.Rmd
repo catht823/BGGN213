@@ -1,0 +1,260 @@
+---
+title: "lab07"
+output: pdf_document
+author: "Zijing"
+date: '2022-10-19'
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+# K-means Clustering
+
+```{r}
+x <- rnorm(30000,3)
+hist(x)
+```
+
+```{r}
+rnorm(30,-3)
+rnorm(30,3)
+```
+
+```{r}
+tmp <-  c(rnorm(30,-3),rnorm(30,3))
+x <- cbind(x=tmp,y=rev(tmp))
+plot(x)
+```
+
+The function to do k-means clustering in base R is called `kmeans()`.
+
+```{r}
+km <- kmeans(x,centers=2,nstart=20)
+km
+```
+
+```{r}
+km$size
+km$cluster
+km$centers
+```
+
+```{r}
+plot(x,col=km$cluster)
+points(km$centers[,1],km$center[,2],col="blue",pch=15,cex=2)
+```
+To run `hclust()` need to input a distance matrix
+```{r}
+hc <- hclust(dist(x))
+hc
+```
+
+```{r}
+plot(hc)
+```
+
+```{r}
+cutree(hc, h=8)
+```
+
+```{r}
+grps <- cutree(hc,k=2)
+```
+
+```{r}
+plot(x,col=grps)
+```
+
+```{r}
+url <- "https://tinyurl.com/UK-foods"
+x <- read.csv(url)
+dim(x)
+```
+
+```{r}
+#preview the first 6 rows
+#head(x,6)
+```
+
+```{r}
+#Don't run this cell without running first cell first
+rownames(x) <- x[,1]
+x <- x[,-1]
+head(x,6)
+```
+# Q1
+```{r}
+dim(x)
+```
+There are 17 rows and 4 columns.
+
+```{r}
+x <- read.csv(url,row.names = 1)
+head(x)
+```
+# Q2 
+The second method better. the previous method can cause the columns of x to be deleted one by one if the cell with x[,-1] is ran more than once. 
+
+```{r}
+barplot(as.matrix(x),beside = T, col=rainbow(nrow(x)))
+```
+# Q3 
+
+Changing beside to False changes the graph
+```{r}
+barplot(as.matrix(x),beside = F, col=rainbow(nrow(x)))
+```
+
+```{r}
+pairs(x,col=rainbow(10),pch=16)
+```
+# Q5
+A given point lies on the diagonal if the consumption of the corresponding food is the same in the two countries being compared.
+
+# Q6
+
+N. Ireland is consuming much more fresh potatoes and less alcoholic drinks than the other three countries.
+```{r}
+pca <- prcomp(t(x))
+summary(pca)
+pca
+pca$x
+```
+
+# Q7
+
+```{r}
+plot(pca$x[,1],pca$x[,2],xlab="PC1", ylab="PC2", xlim=c(-270,500))
+text(pca$x[,1],pca$x[,2],colnames(x))
+```
+# Q8
+
+```{r}
+plot(pca$x[,1],pca$x[,2],xlab="PC1", ylab="PC2", xlim=c(-270,500))
+text(pca$x[,1],pca$x[,2],colnames(x),col=c("orange","pink","blue","green"))
+```
+
+```{r}
+v <- round( pca$sdev^2/sum(pca$sdev^2) * 100 )
+v
+```
+
+```{r}
+z <- summary(pca)
+z$importance
+```
+
+```{r}
+barplot(v, xlab="Principal Component", ylab="Percent Variation")
+```
+```{r}
+par(mar=c(10, 3, 0.35, 0))
+barplot( pca$rotation[,1], las=2 )
+```
+# Q9
+```{r}
+par(mar=c(10, 3, 0.35, 0))
+barplot( pca$rotation[,2], las=2 )
+```
+Fresh potatoes and soft drinks stands out. The PC2 tells us that fresh potatoes and soft drinks are what send Scotland and Wales to the bottom and top of the plot in PC2 vs. PC1 plot.
+```{r}
+biplot(pca)
+```
+
+```{r}
+url2 <- "https://tinyurl.com/expression-CSV"
+rna.data <- read.csv(url2, row.names=1)
+head(rna.data)
+```
+# Q10
+```{r}
+gene <- nrow(rna.data)
+sample <- ncol(rna.data)
+gene
+sample
+```
+There are 100 genes and 10 samples in the data.
+
+```{r}
+pca <- prcomp(t(rna.data), scale=TRUE)
+ 
+plot(pca$x[,1], pca$x[,2], xlab="PC1", ylab="PC2")
+```
+
+```{r}
+summary(pca)
+```
+
+```{r}
+plot(pca, main="Quick scree plot")
+```
+
+```{r}
+pca.var <- pca$sdev^2
+
+pca.var.per <- round(pca.var/sum(pca.var)*100, 1)
+pca.var.per
+
+```
+
+```{r}
+barplot(pca.var.per, main="Scree Plot", 
+        names.arg = paste0("PC", 1:10),
+        xlab="Principal Component", ylab="Percent Variation")
+```
+
+```{r}
+colvec <- colnames(rna.data)
+colvec[grep("wt", colvec)] <- "red"
+colvec[grep("ko", colvec)] <- "blue"
+
+plot(pca$x[,1], pca$x[,2], col=colvec, pch=16,
+     xlab=paste0("PC1 (", pca.var.per[1], "%)"),
+     ylab=paste0("PC2 (", pca.var.per[2], "%)"))
+
+text(pca$x[,1], pca$x[,2], labels = colnames(rna.data), pos=c(rep(4,5), rep(2,5)))
+```
+
+```{r}
+library(ggplot2)
+
+df <- as.data.frame(pca$x)
+
+ggplot(df) + 
+  aes(PC1, PC2) + 
+  geom_point()
+```
+
+```{r}
+df$samples <- colnames(rna.data) 
+df$condition <- substr(colnames(rna.data),1,2)
+
+p <- ggplot(df) + 
+        aes(PC1, PC2, label=samples, col=condition) + 
+        geom_label(show.legend = FALSE)
+p
+```
+
+```{r}
+p + labs(title="PCA of RNASeq Data",
+       subtitle = "PC1 clealy seperates wild-type from knock-out samples",
+       x=paste0("PC1 (", pca.var.per[1], "%)"),
+       y=paste0("PC2 (", pca.var.per[2], "%)"),
+       caption="BIMM143 example data") +
+     theme_bw()
+
+```
+
+```{r}
+loading_scores <- pca$rotation[,1]
+
+gene_scores <- abs(loading_scores) 
+gene_score_ranked <- sort(gene_scores, decreasing=TRUE)
+
+top_10_genes <- names(gene_score_ranked[1:10])
+top_10_genes 
+```
+
+
+Note that the `echo = FALSE` parameter was added to the code chunk to prevent printing of the R code that generated the plot.

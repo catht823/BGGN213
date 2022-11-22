@@ -1,0 +1,39 @@
+---
+title: "lab11"
+output: pdf_document
+author: "Zijing"
+date: "2022-11-03"
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r}
+library(dplyr)
+library(ggplot2)
+```
+
+# Q13
+```{r}
+file <- "population_data.txt"
+
+data <- read.table(file)
+geno <- as.factor(data$geno)
+table(geno)
+summary(data %>% filter(geno == "A/A"))
+summary(data %>% filter(geno == "A/G"))
+summary(data %>% filter(geno == "G/G"))
+```
+Genotype A/A: sample size 108, median expression level 31.25
+Genotype A/G: sample size 233, median expression level 25.065
+Genotype G/G: sample size 121, median expression level 20.074
+
+# Q14
+```{r}
+ggplot(data, aes(geno,exp, fill = geno))+
+  geom_boxplot()+
+  xlab("Genotype")+
+  ylab("Expression")
+```
+Genotype A/A group generally have higher expression of ORMDL3 compared to genotype G/G group. The SNP does affect the expression of ORMDL3.

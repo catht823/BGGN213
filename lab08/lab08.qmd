@@ -1,0 +1,256 @@
+---
+title: "Class 08 Mini Project"
+author: "Zijing"
+format: pdf
+---
+
+```{r}
+# Save input data file into Project directory
+fna.data <- "WisconsinCancer.csv"
+
+
+wisc.df <- read.csv(fna.data, row.names=1)
+```
+
+```{r}
+head(wisc.df)
+```
+
+```{r}
+wisc.data <- wisc.df[,-1]
+```
+
+```{r}
+diagnosis <- as.factor(wisc.df$diagnosis)
+```
+# Q1, Q2, Q3
+```{r}
+nrow(wisc.data)
+table(diagnosis)
+length(grep("_mean",colnames(wisc.data)))
+```
+The data have 569 observations in total, among wich 212 are diagnosed as malignant. There are 10 variables in the data suffixed with "_mean".
+
+```{r}
+colMeans(wisc.data)
+
+apply(wisc.data,2,sd)
+```
+
+```{r}
+wisc.pr <- prcomp(wisc.data, scale=TRUE)
+summary(wisc.pr)
+```
+# Q4
+0.4427 of the original variance is explained by the first principle component.
+
+# Q5
+Three principle components is required to explain at least 70% of the original variance in the data.
+
+# Q6
+Seven principle components is required to explain at least 90% of the original variance in the data.
+
+```{r}
+biplot(wisc.pr)
+```
+
+# Q7
+This plot is extremely hard to read as all the information are squashed together, making it impossible to read any useful information.
+
+```{r}
+plot( wisc.pr$x[,1:2], col = diagnosis , 
+     xlab = "PC1", ylab = "PC2")
+```
+
+```{r}
+plot(wisc.pr$x[,1], wisc.pr$x[,3], col = diagnosis , 
+     xlab = "PC1", ylab = "PC2")
+```
+# Q8
+The two plots show that principle component 1 accounts for the most of the distinction between two diagnosis, showing that PC1 is the factor contributing more to the different diagnosis.
+
+```{r}
+df <- as.data.frame(wisc.pr$x)
+df$diagnosis <- diagnosis
+
+library(ggplot2)
+
+ggplot(df) + 
+  aes(PC1, PC2, col=diagnosis) + 
+  geom_point()
+```
+
+```{r}
+pr.var <- wisc.pr$sdev^2
+head(pr.var)
+```
+
+```{r}
+pve <- pr.var / sum(pr.var)
+
+plot(pve, xlab = "Principal Component", 
+     ylab = "Proportion of Variance Explained", 
+     ylim = c(0, 1), type = "o")
+```
+
+```{r}
+barplot(pve, ylab = "Precent of Variance Explained",
+     names.arg=paste0("PC",1:length(pve)), las=2, axes = FALSE)
+axis(2, at=pve, labels=round(pve,2)*100 )
+```
+
+```{r}
+#install.packages("factoextra")
+library(factoextra)
+fviz_eig(wisc.pr, addlabels = TRUE)
+```
+
+```{r}
+wisc.pr$rotation[,1]
+```
+# Q9
+The component of the loading vector for the feature concave.points_mean is -0.2608. This feature contributes the most to the first principle component, as this feature has the highest absolute value in this leading vector.
+
+```{r}
+data.scaled <- scale(wisc.data)
+```
+
+```{r}
+data.dist <- dist(data.scaled,"euclidean")
+```
+
+```{r}
+wisc.hclust <- hclust(data.dist, "complete")
+```
+
+```{r}
+plot(wisc.hclust)
+abline(h=19, col="red", lty=2)
+```
+# Q10
+The clutering model has 4 clusters at height 19.
+
+```{r}
+wisc.hclust.clusters <- cutree(wisc.hclust,k=4)
+table(wisc.hclust.clusters, diagnosis)
+```
+
+```{r}
+wisc.hclust.2clusters <- cutree(wisc.hclust,k=2)
+table(wisc.hclust.2clusters, diagnosis)
+wisc.hclust.5clusters <- cutree(wisc.hclust,k=5)
+table(wisc.hclust.5clusters, diagnosis)
+wisc.hclust.8clusters <- cutree(wisc.hclust,k=8)
+table(wisc.hclust.8clusters, diagnosis)
+wisc.hclust.10clusters <- cutree(wisc.hclust,k=10)
+table(wisc.hclust.10clusters, diagnosis)
+```
+# Q11
+Cluster with number less than 4 does a bad job at matching with dianosis result, while cluster with number higher than 4 show really trivial improvement. The distinction between cases diagnosed as M vs B does improve, with more clusters converging to just one type of diagnosis. However, clusters including both diagnosis still exist even at 10 clusters.
+
+```{r}
+wisc.hclust.single <- hclust(data.dist, "single")
+wisc.hclust.average <- hclust(data.dist, "average")
+wisc.hclust.ward <- hclust(data.dist, "ward.D2")
+```
+
+```{r}
+wisc.hclust.single.clusters <- cutree(wisc.hclust.single,k=6)
+table(wisc.hclust.single.clusters, diagnosis)
+```
+
+```{r}
+wisc.hclust.average.clusters <- cutree(wisc.hclust.average,k=6)
+table(wisc.hclust.average.clusters, diagnosis)
+```
+
+```{r}
+wisc.hclust.ward.clusters <- cutree(wisc.hclust.ward,k=2)
+table(wisc.hclust.ward.clusters, diagnosis)
+```
+# Q12
+
+I like the result from ward.D2 the most, as it is able to achieve a relatively good clear distinction between M and B diagnosis even just at k=2, while data from all other methods are not able to do that.
+
+```{r}
+wisc.pr.90 <- wisc.pr$x[,1:7]
+data.pr.dist <- dist(wisc.pr.90,"euclidean")
+wisc.pr.hclust <- hclust(data.pr.dist, "ward.D2")
+plot(wisc.pr.hclust)
+```
+
+```{r}
+grps <- cutree(wisc.pr.hclust, k=2)
+table(grps)
+```
+
+```{r}
+table(grps, diagnosis)
+```
+
+```{r}
+plot(wisc.pr$x[,1:2], col=grps)
+```
+
+```{r}
+plot(wisc.pr$x[,1:2], col=diagnosis)
+```
+
+```{r}
+g <- as.factor(grps)
+g <- relevel(g,2)
+levels(g)
+```
+
+```{r}
+plot(wisc.pr$x[,1:2], col=g)
+```
+
+```{r}
+wisc.pr.hclust.clusters <- cutree(wisc.pr.hclust, k=2)
+table(wisc.pr.hclust.clusters, diagnosis)
+```
+# Q13
+
+Although not completely neat, this newly created model separates out the two diagnosis pretty good.
+
+```{r}
+table(wisc.hclust.clusters, diagnosis)
+```
+# Q14
+
+This result from the previous model did not do as good as the model after PCA, especially with more M diagnosis in the majorly B diagnosis group.
+
+```{r}
+# ward.D2 with PCA
+188/(188+24)
+329/(329+28)
+```
+```{r}
+#ward.D2 without PCA
+164/(164+48)
+337/(337+20)
+```
+```{r}
+#complete without PCA
+(165+5+2)/(165+5+2+40)
+343/(343+2+12)
+```
+# Q15
+Among the three models being evaluated above, the model using PCA and the 'ward.D2' method achieves the best sensitivity. The model without PCA using the 'complete' method achieves the best specificity.
+
+```{r}
+url <- "https://tinyurl.com/new-samples-CSV"
+new <- read.csv(url)
+npc <- predict(wisc.pr, newdata=new)
+npc
+```
+
+```{r}
+plot(wisc.pr$x[,1:2], col=g)
+points(npc[,1], npc[,2], col="blue", pch=16, cex=3)
+text(npc[,1], npc[,2], c(1,2), col="white")
+```
+# Q16
+
+Patient 2 should be prioritized for followup as its data is more similar to that of previous patients with malignant diagnosis, so patient 2 is more likely to be a malignant case.

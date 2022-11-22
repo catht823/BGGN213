@@ -1,0 +1,161 @@
+---
+title: "lab09"
+author: "Zijing"
+format: pdf
+---
+
+```{r}
+data <- read.csv("Data Export Summary.csv")
+row.names(data) <- data$Molecular.Type
+data <- data[-1]
+row <- nrow(data)
+col <- ncol(data)
+for(m in 1:row){
+  for(j in 1:col){
+    if (grepl(",", data[m,j]) == TRUE){
+      bef <- sub(",.*", "", data[m,j])
+      aft <- sub(".*,", "", data[m,j])
+      num <- paste(bef,aft,sep="")
+      data[m,j] <- num}
+  }
+}
+```
+
+# Q1
+
+```{r}
+x.ray <- 0
+total <- 0
+em <- 0
+for (m in 1:row){
+  x.ray <- x.ray + as.numeric(data[m,1])
+  em <- em+as.numeric(data[m,3])
+  total <- total + as.numeric(data[m,7])
+}
+
+perc_xm <- (x.ray+em)/total
+perc_xm
+```
+92.8% percent of the structures in the PDB are solved by X.ray or EM.
+
+# Q2
+
+```{r}
+protein <- 0
+tot <- 0
+for (m in 1:row){
+  if (m<=3){
+    protein <- protein+as.numeric(data[m,7])
+  }
+  tot <- tot+as.numeric(data[m,7])
+}
+
+perc_prot <- protein/tot
+perc_prot
+```
+97.8% percentage of structures are protein.
+
+# Q3
+There are 1264 HIV-1 protease structures.
+
+# Q4
+
+There is not enough resolution for the hydrogen to be shown. 
+
+# Q5
+The water molecule has residue number HOH 308.
+
+# Q6
+![](1HSG.png)
+
+```{r}
+library(bio3d)
+
+pdb <- read.pdb("1hsg")
+pdb
+```
+
+# Q7
+There are 198 residues in this pdb object.
+
+# Q8
+Non-protein residue HOH (127)
+
+# Q9
+There are two protein chains in this structure.
+```{r}
+head(pdb$atom)
+```
+
+```{r}
+adk <- read.pdb("6s36")
+adk
+```
+
+
+
+```{r}
+m <- nma(adk)
+plot(m)
+```
+
+```{r}
+mktrj(m, file="adk_m7.pdb")
+```
+
+# Q10. 
+Which of the packages above is found only on BioConductor and not CRAN? 
+msa
+
+# Q11. 
+Which of the above packages is not found on BioConductor or CRAN?: 
+bio3d-view
+
+# Q12. 
+True or False? Functions from the devtools package can be used to install packages from GitHub and BitBucket? 
+TRUE
+
+# Comparative Analysis of all ADK structures
+
+```{r}
+aa <- get.seq("1ake_a")
+aa
+```
+
+# Q13. 
+How many amino acids are in this sequence, i.e. how long is this sequence? 
+214
+
+```{r}
+blast <- blast.pdb(aa)
+```
+
+```{r}
+hits <- plot(blast)
+```
+
+```{r}
+pdb.annotate(hits$pdb.id)
+```
+```{r}
+files <- get.pdb(hits$pdb.id,path="pdbs",split=TRUE, gzip=TRUE)
+```
+
+# PCA
+
+```{r}
+pdbs <- pdbaln(files, fit = TRUE, exefile="msa")
+```
+
+```{r}
+pc.xray <- pca(pdbs)
+```
+
+```{r}
+plot(pc.xray)
+```
+
+```{r}
+mktrj(pc.xray, pc=1, file="pc_1.pdb")
+```
+

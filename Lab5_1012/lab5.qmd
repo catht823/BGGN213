@@ -1,0 +1,214 @@
+---
+title: "lab5"
+author: "Zijing"
+format: pdf
+editor: visual
+---
+
+# Our First Plot
+
+R has base graphics
+
+```{r}
+plot(cars)
+```
+
+
+```{r}
+#install.package("ggplot2")
+#install.packages("gapminder")
+#install.packages("dplyr")
+#install.packages("patchwork")
+#install.packages("gganimate")
+library(ggplot2)
+
+```
+
+Every ggplot needs at least 3 layers:
+
+- **Data** 
+- **Aes**
+- **Geoms**
+
+```{r}
+ggplot(cars) +
+  aes(x=speed, y = dist)+
+  geom_point()+
+  geom_smooth()+
+  theme_bw()+
+  labs(title="Speed and Stopping Distances of Cars",
+       x="Speed (MPH)",
+       y="Stopping Distance (ft)",
+       caption="Dataset: 'cars'")
+```
+
+```{r}
+#Download Gene Data
+url <- "https://bioboot.github.io/bimm143_S20/class-material/up_down_expression.txt"
+genes <- read.delim(url)
+head(genes)
+```
+
+```{r}
+nrow(genes)
+ncol(genes)
+colnames(genes)
+```
+
+```{r}
+state <- table(genes$State)
+state
+state["up"]/sum(state)
+```
+
+```{r}
+ggplot(genes, aes(x=Condition1,y=Condition2))+
+  geom_point()
+```
+
+```{r}
+ggplot(genes, aes(x=Condition1,y=Condition2, col=State))+
+  geom_point()+
+  scale_colour_manual( values=c("blue","gray","red") )+
+  labs(title="Gene Expression Changes Upon Drug Treatment",
+       x="Control (No Drug)",
+       y="Drug Treatment")
+```
+
+
+```{r}
+#install.packages("gapminder")
+#install.packages("dplyr")
+library(gapminder)
+library(dplyr)
+gapminder_2007 <- gapminder %>% filter(year==2007)
+```
+
+```{r}
+ggplot(gapminder_2007,aes(x=gdpPercap, y=lifeExp,col=continent,size=pop))+
+  geom_point(alpha=0.4)
+
+ggplot(gapminder_2007,aes(x=gdpPercap, y=lifeExp,col=pop))+
+  geom_point(alpha=0.8)
+
+ggplot(gapminder_2007,aes(x=gdpPercap, y=lifeExp,size=pop))+
+  geom_point(alpha=0.5)
+
+ggplot(gapminder_2007,aes(x=gdpPercap, y=lifeExp,size=pop,))+
+  geom_point(alpha=0.5)+
+  scale_size_area(max_size=10)
+```
+
+```{r}
+gapminder_1957 <- gapminder %>% filter(year==1957)
+ggplot(gapminder_1957,aes(x=gdpPercap, y=lifeExp,col=continent,size=pop))+
+  geom_point(alpha=0.7)+
+  scale_size_area(max_size = 15)
+```
+
+```{r}
+gapminder_1 <- gapminder_1957 %>% filter(gdpPercap>90000)
+gapminder_1
+```
+
+```{r}
+gapminder_2years <- gapminder %>% filter(year==1957 | year==2007)
+ggplot(gapminder_2years,aes(x=gdpPercap, y=lifeExp,col=continent,size=pop))+
+  geom_point(alpha=0.7)+
+  scale_size_area(max_size = 15)+
+  facet_wrap(~year)
+```
+
+```{r}
+gapminder_top5 <- gapminder %>% filter(year==2007) %>% arrange(desc(pop)) %>%top_n(5,pop)
+gapminder_top5
+```
+
+```{r}
+ggplot(gapminder_top5,aes(x = country, y = pop))+
+  geom_col()
+ggplot(gapminder_top5,aes(x = country, y = lifeExp))+
+  geom_col()
+
+```
+
+```{r}
+ggplot(gapminder_top5,aes(x = country, y = pop, fill=continent))+
+  geom_col()
+ggplot(gapminder_top5,aes(x = country, y = pop, fill=lifeExp))+
+  geom_col()
+ggplot(gapminder_top5,aes(x = country, y = pop, fill=gdpPercap))+
+  geom_col()
+```
+
+```{r}
+ggplot(gapminder_top5,aes(x = reorder(country,-pop), y = pop, fill=gdpPercap))+
+  geom_col()
+ggplot(gapminder_top5,aes(x = reorder(country,-pop), y = pop, fill=country))+
+  geom_col(col="gray30")+
+  guides(fill=FALSE)
+```
+
+```{r}
+head(USArrests)
+USArrests$State <- rownames(USArrests)
+ggplot(USArrests, aes(x=reorder(State,Murder), y=Murder))+
+  geom_col()+
+  coord_flip()
+
+ggplot(USArrests, aes(x=reorder(State,Murder), y=Murder))+
+  geom_point()+
+  geom_segment(aes(x=State,xend=State,y=0,yend=Murder),col="blue")+
+  coord_flip()
+```
+
+```{r}
+library(gganimate)
+
+ggplot(gapminder, aes(gdpPercap, lifeExp, size = pop, colour = country)) +
+  geom_point(alpha = 0.7, show.legend = FALSE) +
+  scale_colour_manual(values = country_colors) +
+  scale_size(range = c(2, 12)) +
+  scale_x_log10() +
+  facet_wrap(~continent) +
+  labs(title = 'Year: {frame_time}', x = 'GDP per capita', y = 'life expectancy') +
+  transition_time(year) +
+  shadow_wake(wake_length = 0.1, alpha = FALSE)
+```
+
+```{r}
+library(patchwork)
+
+p1 <- ggplot(mtcars) + geom_point(aes(mpg, disp))
+p2 <- ggplot(mtcars) + geom_boxplot(aes(gear, disp, group = gear))
+p3 <- ggplot(mtcars) + geom_smooth(aes(disp, qsec))
+p4 <- ggplot(mtcars) + geom_bar(aes(carb))
+
+(p1 | p2 | p3) /
+      p4
+```
+
+
+
+# Here is a level 1 head
+
+## Quarto
+
+Quarto enables you to weave together content and executable code into a finished document. To learn more about Quarto see <https://quarto.org>.
+
+## Running Code
+
+When you click the **Render** button a document will be generated that includes both content and the output of embedded code. You can embed code like this:
+
+```{r}
+1 + 1
+```
+
+You can add options to executable code like this
+
+```{r}
+#| echo: false
+2 * 2
+```
+
+The `echo: false` option disables the printing of code (only output is displayed).

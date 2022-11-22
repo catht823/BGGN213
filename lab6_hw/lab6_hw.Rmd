@@ -1,0 +1,51 @@
+---
+title: "lab6_hw"
+output: pdf_document
+author: "Zijing"
+date: '2022-10-15'
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r}
+library(bio3d)
+```
+
+
+## Q6
+
+This function evaluates the b-factor similarity of different proteins. Enter the wanted chain and elety to be compared and the proteins being compared as a vector. The function would output a hierarchical cluster dendrogram based on protein b-factor similarity.
+
+Inputs: 
+chain: the chain identifier that user wants to compare within proteins 
+elety: atom type to be compared within proteins
+proteins: the list of proteins to be compared as a vector
+
+Output: a hierarchical cluster dendrogram showing b-factor correlation among proteins.
+```{r}
+protein_comp <- function(chain,elety,proteins){
+  labs <- c()
+  for (i in 1:length(proteins)){
+    protein <- read.pdb(proteins[i])
+    protein.subset <- trim.pdb(protein, chain=chain,elety=elety)
+    protein.b <- (protein.subset$atom$b)
+    labs <- c(labs,proteins[i])
+    if (i==1){
+      protein.list <- protein.b
+    }
+    else{
+      protein.list <- rbind(protein.list,protein.b)
+    }
+  }
+  hc <- hclust(dist(protein.list))
+  return(plot(hc,labels=labs))
+}
+
+```
+
+```{r}
+protein_comp("A","CA",c("4AKE","1AKE","1E4Y"))
+```
+
