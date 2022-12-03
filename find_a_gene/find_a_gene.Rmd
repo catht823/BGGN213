@@ -1,0 +1,67 @@
+---
+title: "find_a_gene"
+output: pdf_document
+date: "2022-11-27"
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r}
+#BiocManager::install("bio3d")
+```
+
+```{r}
+library("bio3d")
+```
+
+```{r}
+align <- read.fasta("muscle-I20221127-001845-0268-397600-p2m.clw.fst")
+```
+
+```{r}
+idmatrix <- seqidentity(align)
+idmatrix
+```
+
+```{r}
+heatmap(idmatrix, cexCol = 0.5, cexRow = 0.5)
+
+```
+
+```{r}
+max = 0
+
+for (i in 1:nrow(idmatrix)){
+  current <- sum(idmatrix[i,])
+  if (current > max){
+    max <- current
+    seq <- rownames(idmatrix)[i]
+  }
+}
+seq
+```
+
+```{r}
+ne <- read.fasta("n_eugenii_nogap.fst")
+ne
+```
+
+```{r}
+blast <- blast.pdb(ne)
+
+```
+
+```{r}
+head(blast)
+```
+
+```{r}
+hits <- plot(blast)
+```
+
+```{r}
+pdb.annotate(hits$pdb.id)
+```
+

@@ -1,0 +1,299 @@
+---
+title: "lab19"
+output: pdf_document
+author: "Zijing"
+date: "2022-12-02"
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+# Q1
+
+```{r}
+cdc <- data.frame(
+                          Year = c(1922L,
+                                   1923L,1924L,1925L,1926L,1927L,1928L,
+                                   1929L,1930L,1931L,1932L,1933L,1934L,1935L,
+                                   1936L,1937L,1938L,1939L,1940L,1941L,
+                                   1942L,1943L,1944L,1945L,1946L,1947L,1948L,
+                                   1949L,1950L,1951L,1952L,1953L,1954L,
+                                   1955L,1956L,1957L,1958L,1959L,1960L,
+                                   1961L,1962L,1963L,1964L,1965L,1966L,1967L,
+                                   1968L,1969L,1970L,1971L,1972L,1973L,
+                                   1974L,1975L,1976L,1977L,1978L,1979L,1980L,
+                                   1981L,1982L,1983L,1984L,1985L,1986L,
+                                   1987L,1988L,1989L,1990L,1991L,1992L,1993L,
+                                   1994L,1995L,1996L,1997L,1998L,1999L,
+                                   2000L,2001L,2002L,2003L,2004L,2005L,
+                                   2006L,2007L,2008L,2009L,2010L,2011L,2012L,
+                                   2013L,2014L,2015L,2016L,2017L,2018L,
+                                   2019L),
+  No..Reported.Pertussis.Cases = c(107473,
+                                   164191,165418,152003,202210,181411,
+                                   161799,197371,166914,172559,215343,179135,
+                                   265269,180518,147237,214652,227319,103188,
+                                   183866,222202,191383,191890,109873,
+                                   133792,109860,156517,74715,69479,120718,
+                                   68687,45030,37129,60886,62786,31732,28295,
+                                   32148,40005,14809,11468,17749,17135,
+                                   13005,6799,7717,9718,4810,3285,4249,
+                                   3036,3287,1759,2402,1738,1010,2177,2063,
+                                   1623,1730,1248,1895,2463,2276,3589,
+                                   4195,2823,3450,4157,4570,2719,4083,6586,
+                                   4617,5137,7796,6564,7405,7298,7867,
+                                   7580,9771,11647,25827,25616,15632,10454,
+                                   13278,16858,27550,18719,48277,28639,
+                                   32971,20762,17972,18975,15609,18617)
+)
+```
+
+```{r}
+library(ggplot2)
+```
+
+
+```{r}
+ggplot(cdc) +
+  aes(Year, No..Reported.Pertussis.Cases) +
+  geom_point() +
+  geom_line() +
+  labs(x="Year",y="Number of Cases")
+```
+# Q2
+
+```{r}
+ggplot(cdc) +
+  aes(Year, No..Reported.Pertussis.Cases) +
+  geom_point() +
+  geom_line() +
+  geom_vline(xintercept=c(1946,1996),linetype="dashed")+
+  labs(x="Year",y="Number of Cases")
+```
+The number of cases dropped after the introduction of wP vaccination but started to rise again several years after the introduction of aP vaccination.
+
+# Q3
+
+The number of cases started to rise again several years after the introduction of aP vaccination. Maybe this is caused by the infection happening in grown-up infants that got aP vaccination?
+
+```{r}
+library(jsonlite)
+```
+
+```{r}
+subject <- read_json("https://www.cmi-pb.org/api/subject", simplifyVector = TRUE) 
+head(subject, 3)
+```
+# Q4
+
+```{r}
+table(subject$infancy_vac)
+```
+47 aP and 49 wP.
+
+# Q5
+
+```{r}
+table(subject$biological_sex)
+```
+66 Female and 30 Male.
+
+```{r}
+table(subject$race)
+```
+
+
+```{r}
+library(dplyr)
+```
+# Q6
+
+```{r}
+male <- subject%>%filter(biological_sex == "Male")
+female <- subject%>%filter(biological_sex == "Female")
+```
+Male race breakdown:
+```{r}
+table(male$race)
+
+```
+Female race breakdown:
+```{r}
+table(female$race)
+```
+
+```{r}
+library(lubridate)
+today()
+```
+
+```{r}
+today() - ymd("2000-01-01")
+```
+
+```{r}
+time_length( today() - ymd("2000-01-01"),  "years")
+```
+
+# Q7
+
+```{r}
+subject$age <- today() - ymd(subject$year_of_birth)
+ap <- subject%>%filter(infancy_vac == "aP")
+wp <- subject%>%filter(infancy_vac == "wP")
+time_length(mean(ap$age),"years")
+time_length(mean(wp$age),"years")
+```
+wP average: 36 years, aP average: 25 years.The average age of wP receivers is much higher than that of aP receivers
+
+# Q8
+
+```{r}
+boost_age <- time_length(ymd(subject$date_of_boost) - ymd(subject$year_of_birth), "year")
+head(boost_age)
+```
+# Q9
+
+```{r}
+ggplot(subject) +
+  aes(time_length(age, "year"),
+      fill=as.factor(infancy_vac)) +
+  geom_histogram(show.legend=FALSE) +
+  facet_wrap(vars(infancy_vac), nrow=2) 
+```
+Yes, these two groups are different.
+
+```{r}
+specimen <- read_json("https://www.cmi-pb.org/api/specimen", simplifyVector = TRUE) 
+titer <- read_json("https://www.cmi-pb.org/api/ab_titer", simplifyVector = TRUE) 
+```
+# Q9
+
+```{r}
+meta <- full_join(specimen, subject)
+dim(meta)
+head(meta)
+```
+# Q10
+
+```{r}
+abdata <- inner_join(titer, meta)
+dim(abdata)
+```
+```{r}
+head(abdata)
+```
+
+# Q11
+
+```{r}
+table(abdata$isotype)
+```
+
+# Q12
+
+```{r}
+table(abdata$visit)
+```
+Much less specimens in visit 8 compared to other visits.
+
+```{r}
+ig1 <- abdata %>% filter(isotype == "IgG1", visit!=8)
+head(ig1)
+```
+
+
+
+# Q13
+
+```{r}
+ggplot(ig1) +
+  aes(MFI, antigen) +
+  geom_boxplot() + 
+  facet_wrap(vars(visit), nrow=2)
+```
+# Q14
+
+FIM2/3 is the most different one antigen. PRN and FHA are quite different as well.
+
+```{r}
+ggplot(ig1) +
+  aes(MFI, antigen, col=infancy_vac ) +
+  geom_boxplot(show.legend = FALSE) + 
+  facet_wrap(vars(visit), nrow=2) +
+  theme_bw()
+```
+```{r}
+ggplot(ig1) +
+  aes(MFI, antigen, col=infancy_vac ) +
+  geom_boxplot(show.legend = FALSE) + 
+  facet_wrap(vars(infancy_vac, visit), nrow=2)
+```
+# Q15
+
+```{r}
+filter(ig1, antigen=="PTM") %>%
+  ggplot() +
+  aes(MFI, col=infancy_vac) +
+  geom_boxplot(show.legend = TRUE) +
+  facet_wrap(vars(visit)) +
+  theme_bw()
+```
+
+```{r}
+filter(ig1, antigen=="FIM2/3") %>%
+  ggplot() +
+  aes(MFI, col=infancy_vac) +
+  geom_boxplot(show.legend = TRUE) +
+  facet_wrap(vars(visit)) +
+  theme_bw()
+```
+# Q16
+
+Both rise over time, but FIM2/3 more significantly. Visit 5 seems to be the peak for both.
+
+# Q17
+
+aP response starts being lower but ends up being higher than wP response. However, they follow a similar trend of rising and then declining over time. 
+
+```{r}
+url <- "https://www.cmi-pb.org/api/v2/rnaseq?versioned_ensembl_gene_id=eq.ENSG00000211896.7"
+
+rna <- read_json(url, simplifyVector = TRUE) 
+```
+
+```{r}
+ssrna <- inner_join(rna, meta)
+```
+# Q18
+
+```{r}
+ggplot(ssrna) +
+  aes(visit, tpm, group=subject_id) +
+  geom_point() +
+  geom_line(alpha=0.2)
+```
+# Q19
+
+The gene expression is at its maximum level at visit 4.
+
+# Q20
+
+This does not match the antibody pattern as the antibody peaks at visit 5. This is likely because antibodies are made after the genes are expressed and would live for a long time. Thus, the antibody expression continues to accumulate until gene expression has dropped to zero, which is until sometime between visit 4 and 5, leading to the peak in antibody detection on visit 5.
+
+```{r}
+ggplot(ssrna) +
+  aes(tpm, col=infancy_vac) +
+  geom_boxplot() +
+  facet_wrap(vars(visit))
+```
+```{r}
+ssrna %>%  
+  filter(visit==4) %>% 
+  ggplot() +
+    aes(tpm, col=infancy_vac) + geom_density() + 
+    geom_rug() 
+```
+
+
