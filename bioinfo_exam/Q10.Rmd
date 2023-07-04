@@ -1,0 +1,42 @@
+---
+title: "Bioinfo Exam Q10"
+output: pdf_document
+author: 'Zijing Tan PID: A14534409'
+date: "2023-07-02"
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r}
+#load packages
+library('ggplot2')
+library('lubridate')
+library('dplyr')
+```
+
+```{r}
+#load & inspect data
+data <- read.csv('covid19_variants.csv')
+head(data)
+tail(data)
+```
+
+```{r}
+#remove the 'Total' and 'Other' variant_name data from the set
+data <- data%>%filter(variant_name!='Total')%>%filter(variant_name!='Other')
+#change data type in date column to date
+data$date <- ymd(data$date)
+```
+
+```{r}
+#plotting the data
+ggplot(data,aes(date,percentage,group=variant_name))+
+  geom_line(aes(color=variant_name))+
+  labs(title='Covid-19 Variants in California',y='Percentage of sequenced specimens',color='Covid Variant Type',x='')+
+  scale_x_date(date_breaks = 'month',date_labels = '%b %Y')+
+  theme_bw()+
+  theme(axis.text.x = element_text(angle = 45,vjust=1,hjust=1,size=7))
+```
+
